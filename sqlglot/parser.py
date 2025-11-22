@@ -6512,6 +6512,14 @@ class Parser(metaclass=_Parser):
             and self._prev.token_type == TokenType.DESC
         )
 
+        # Parse and discard optional name for named primary keys (e.g., PRIMARY KEY pk_name (col))
+        index = self._index
+        name = self._parse_id_var()
+        if not self._match(TokenType.L_PAREN, advance=False) or (
+            name and name.this.upper() in self.CONSTRAINT_PARSERS
+        ):
+            self._retreat(index)
+
         if not in_props and not self._match(TokenType.L_PAREN, advance=False):
             return self.expression(
                 exp.PrimaryKeyColumnConstraint,
