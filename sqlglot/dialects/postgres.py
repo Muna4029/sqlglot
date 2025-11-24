@@ -300,6 +300,11 @@ class Postgres(Dialect):
     TABLESAMPLE_SIZE_IS_PERCENT = True
     SUPPORTS_TABLES_REFERENCED_AS_COLUMNS = True
 
+    FUNCTIONS_COLUMN_NAMES = {
+        exp.GenerateSeries: "generate_series",
+        exp.ExplodingGenerateSeries: "generate_series",
+    }
+
     TIME_MAPPING = {
         "d": "%u",  # 1-based day of week
         "D": "%u",  # 1-based day of week

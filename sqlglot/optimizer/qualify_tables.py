@@ -4,7 +4,7 @@ import typing as t
 
 from sqlglot import exp
 from sqlglot.dialects.dialect import Dialect, DialectType
-from sqlglot.helper import name_sequence, seq_get
+from sqlglot.helper import name_sequence, ensure_list
 from sqlglot.optimizer.normalize_identifiers import normalize_identifiers
 from sqlglot.optimizer.scope import Scope, traverse_scope
 
@@ -126,18 +126,20 @@ def qualify_tables(
 
         for name, source in scope.sources.items():
             if isinstance(source, exp.Table):
-                if dialect == "postgres" and isinstance(source.this, exp.GenerateSeries):
+                if isinstance(source.this, exp.Func):
                     table_alias = source.args.get("alias")
                     if not table_alias:
-                        table_alias = exp.TableAlias(
-                            this=exp.to_identifier(next_alias_name()),
-                            columns=[exp.to_identifier("generate_series")],
+                        function_columns = dialect.FUNCTIONS_COLUMN_NAMES.get(type(source.this))
+                        exp.alias_(
+                            source,
+                            next_alias_name(),
+                            copy=False,
+                            table=ensure_list(function_columns) if function_columns else True,
                         )
-                        source.set("alias", table_alias)
-                    elif not table_alias.args.get("columns"):
-                        original_alias_name = table_alias.alias_or_name
-                        table_alias.set("this", exp.to_identifier(next_alias_name()))
-                        table_alias.set("columns", [exp.to_identifier(original_alias_name)])
+                    elif not table_alias.columns:
+                        exp.alias_(
+                            source, next_alias_name(), table=[table_alias.alias_or_name], copy=False
+                        )
 
                 # When the name is empty, it means that we have a non-table source, e.g. a pivoted cte
                 is_real_table_source = bool(name)

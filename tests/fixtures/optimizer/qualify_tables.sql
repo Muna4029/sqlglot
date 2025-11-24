@@ -168,7 +168,7 @@ SELECT x FROM c.db.t AS t, LATERAL UNNEST(t.xs) AS "_0";
 
 # title: table with ordinality
 SELECT * FROM t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS kv_json;
-SELECT * FROM c.db.t AS t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS kv_json;
+SELECT * FROM c.db.t AS t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS _q_0(kv_json);
 
 # title: alter table
 ALTER TABLE t ADD PRIMARY KEY (id) NOT ENFORCED;
