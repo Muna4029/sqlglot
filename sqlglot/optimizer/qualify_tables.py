@@ -136,13 +136,12 @@ def qualify_tables(
                             source,
                             next_alias_name(),
                             copy=False,
-                            table=ensure_list(function_columns),
+                            table=ensure_list(function_columns) or True,
                         )
                     elif not table_alias.columns:
                         exp.alias_(
                             source, next_alias_name(), table=[table_alias.alias_or_name], copy=False
                         )
-                    continue
 
                 # When the name is empty, it means that we have a non-table source, e.g. a pivoted cte
                 is_real_table_source = bool(name)
