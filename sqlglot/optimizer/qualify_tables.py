@@ -142,6 +142,7 @@ def qualify_tables(
                         exp.alias_(
                             source, next_alias_name(), table=[table_alias.alias_or_name], copy=False
                         )
+                    continue
 
                 # When the name is empty, it means that we have a non-table source, e.g. a pivoted cte
                 is_real_table_source = bool(name)

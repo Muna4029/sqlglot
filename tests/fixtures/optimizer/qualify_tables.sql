@@ -168,7 +168,7 @@ SELECT x FROM c.db.t AS t, LATERAL UNNEST(t.xs) AS "_0";
 
 # title: table with ordinality
 SELECT * FROM t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS kv_json;
-SELECT * FROM c.db.t AS t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS _q_0(kv_json);
+SELECT * FROM c.db.t AS t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS _0(kv_json);
 
 # title: alter table
 ALTER TABLE t ADD PRIMARY KEY (id) NOT ENFORCED;
@@ -213,7 +213,7 @@ WITH cte AS (SELECT 1 AS c, 'name' AS name) UPDATE t SET name = cte.name FROM ct
 WITH cte AS (SELECT 1 AS c, 'name' AS name) UPDATE c.db.t SET name = cte.name FROM cte WHERE cte.c = 1;
 
 # title: avoid qualifying CTE with DELETE
-WITH cte AS (SELECT 1 AS c, 'name' AS name) DELETE t FROM t AS t INNER JOIN cte ON t.id = cte.c;;
+WITH cte AS (SELECT 1 AS c, 'name' AS name) DELETE t FROM t AS t INNER JOIN cte ON t.id = cte.c;
 WITH cte AS (SELECT 1 AS c, 'name' AS name) DELETE c.db.t FROM c.db.t AS t INNER JOIN cte ON t.id = cte.c;
 
 # title: canonicalize single table alias
@@ -260,14 +260,13 @@ SELECT * FROM c.db.x AS "_1" WHERE "_1".a = (SELECT SUM("_0".c) AS c FROM c.db.y
 # canonicalize_table_aliases: true
 SELECT t.foo FROM t AS t, (SELECT t.bar FROM t AS t);
 SELECT "_2".foo FROM c.db.t AS "_2", (SELECT "_0".bar FROM c.db.t AS "_0") AS "_1";
-;
 
 # title: Qualify GENERATE_SERIES with its default column generate_series
 # dialect: postgres
 SELECT generate_series FROM GENERATE_SERIES(1,2);
-SELECT generate_series FROM GENERATE_SERIES(1, 2) AS _q_0(generate_series);
+SELECT generate_series FROM GENERATE_SERIES(1, 2) AS _0(generate_series);
 
 # title: Qualify GENERATE_SERIES with alias by wrapping it
 # dialect: postgres
 SELECT g FROM GENERATE_SERIES(1,2) AS g;
-SELECT g FROM GENERATE_SERIES(1, 2) AS _q_0(g);
+SELECT g FROM GENERATE_SERIES(1, 2) AS _0(g);
