@@ -134,7 +134,7 @@ def qualify_tables(
                             source,
                             next_alias_name(),
                             copy=False,
-                            table=ensure_list(function_columns) if function_columns else True,
+                            table=ensure_list(function_columns),
                         )
                     elif not table_alias.columns:
                         exp.alias_(
