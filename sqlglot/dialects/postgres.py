@@ -301,7 +301,6 @@ class Postgres(Dialect):
     SUPPORTS_TABLES_REFERENCED_AS_COLUMNS = True
 
     FUNCTIONS_COLUMN_NAMES = {
-        exp.GenerateSeries: "generate_series",
         exp.ExplodingGenerateSeries: "generate_series",
     }
 
