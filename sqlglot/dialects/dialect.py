@@ -558,7 +558,7 @@ class Dialect(metaclass=_Dialect):
     Whether a UUID is considered a string or a UUID type.
     """
 
-    FUNCTIONS_COLUMN_NAMES: t.Dict[t.Type[exp.Func], t.Union[str, t.Tuple[str, ...]]] = {}
+    DEFAULT_FUNCTIONS_COLUMN_NAMES: t.Dict[t.Type[exp.Func], t.Union[str, t.Tuple[str, ...]]] = {}
     """
     Maps function expressions to their default output column name(s).
     """

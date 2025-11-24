@@ -300,7 +300,7 @@ class Postgres(Dialect):
     TABLESAMPLE_SIZE_IS_PERCENT = True
     SUPPORTS_TABLES_REFERENCED_AS_COLUMNS = True
 
-    FUNCTIONS_COLUMN_NAMES = {
+    DEFAULT_FUNCTIONS_COLUMN_NAMES = {
         exp.ExplodingGenerateSeries: "generate_series",
     }
 

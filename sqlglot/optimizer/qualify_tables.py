@@ -129,7 +129,9 @@ def qualify_tables(
                 if isinstance(source.this, exp.Func):
                     table_alias = source.args.get("alias")
                     if not table_alias:
-                        function_columns = dialect.FUNCTIONS_COLUMN_NAMES.get(type(source.this))
+                        function_columns = dialect.DEFAULT_FUNCTIONS_COLUMN_NAMES.get(
+                            type(source.this)
+                        )
                         exp.alias_(
                             source,
                             next_alias_name(),
