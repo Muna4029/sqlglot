@@ -143,4 +143,8 @@ spark_warehouse
 sqlglot/_version.py
 
 # Emacs files
-*~
+*~# Shell redirection artifacts
+=[0-9]*
+>[0-9]*
+*.tmp
+*.log
