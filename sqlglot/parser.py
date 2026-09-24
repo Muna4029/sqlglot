@@ -255,6 +255,7 @@ class Parser(metaclass=_Parser):
             to=exp.DataType(this=exp.DataType.Type.TEXT),
         ),
         "TO_HEX": build_hex,
+        "FROM_HEX": exp.Unhex.from_arg_list,
         "TS_OR_DS_TO_DATE_STR": lambda args: exp.Substring(
             this=exp.Cast(
                 this=seq_get(args, 0),
