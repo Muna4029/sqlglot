@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from collections import defaultdict
+from copy import deepcopy
 
-from sqlglot import exp, transforms, jsonpath
+from sqlglot import exp, jsonpath, transforms
 from sqlglot.dialects.dialect import (
-    date_delta_sql,
     build_date_delta,
-    timestamptrunc_sql,
     build_formatted_time,
+    date_delta_sql,
     groupconcat_sql,
+    timestamptrunc_sql,
 )
 from sqlglot.dialects.spark import Spark
-from sqlglot.tokens import TokenType
 from sqlglot.optimizer.annotate_types import TypeAnnotator
+from sqlglot.tokens import TokenType
 
 
 def _jsonextract_sql(

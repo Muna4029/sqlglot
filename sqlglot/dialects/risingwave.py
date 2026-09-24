@@ -1,10 +1,11 @@
 from __future__ import annotations
-from sqlglot.dialects.postgres import Postgres
-from sqlglot.generator import Generator
-from sqlglot.tokens import TokenType
+
 import typing as t
 
 from sqlglot import exp
+from sqlglot.dialects.postgres import Postgres
+from sqlglot.generator import Generator
+from sqlglot.tokens import TokenType
 
 
 class RisingWave(Postgres):
@@ -39,14 +40,20 @@ class RisingWave(Postgres):
             if not self._match(TokenType.ALIAS):
                 header = self._parse_field()
                 if header:
-                    coldef = self.expression(exp.ColumnDef, this=header, kind=self._parse_types())
+                    coldef = self.expression(
+                        exp.ColumnDef, this=header, kind=self._parse_types()
+                    )
 
             self._match(TokenType.ALIAS)
             alias = self._parse_id_var(tokens=self.ALIAS_TOKENS)
 
-            return self.expression(exp.IncludeProperty, this=this, alias=alias, column_def=coldef)
+            return self.expression(
+                exp.IncludeProperty, this=this, alias=alias, column_def=coldef
+            )
 
-        def _parse_encode_property(self, key: t.Optional[bool] = None) -> exp.EncodeProperty:
+        def _parse_encode_property(
+            self, key: t.Optional[bool] = None
+        ) -> exp.EncodeProperty:
             self._match_text_seq("ENCODE")
             this = self._parse_var_or_string()
 
@@ -57,7 +64,9 @@ class RisingWave(Postgres):
             else:
                 properties = None
 
-            return self.expression(exp.EncodeProperty, this=this, properties=properties, key=key)
+            return self.expression(
+                exp.EncodeProperty, this=this, properties=properties, key=key
+            )
 
     class Generator(Postgres.Generator):
         LOCKING_READS_SUPPORTED = False
@@ -75,11 +84,16 @@ class RisingWave(Postgres):
 
         EXPRESSION_PRECEDES_PROPERTIES_CREATABLES = {"SINK"}
 
-        def computedcolumnconstraint_sql(self, expression: exp.ComputedColumnConstraint) -> str:
+        def computedcolumnconstraint_sql(
+            self, expression: exp.ComputedColumnConstraint
+        ) -> str:
             return Generator.computedcolumnconstraint_sql(self, expression)
 
         def datatype_sql(self, expression: exp.DataType) -> str:
-            if expression.is_type(exp.DataType.Type.MAP) and len(expression.expressions) == 2:
+            if (
+                expression.is_type(exp.DataType.Type.MAP)
+                and len(expression.expressions) == 2
+            ):
                 key_type, value_type = expression.expressions
                 return f"MAP({self.sql(key_type)}, {self.sql(value_type)})"
 

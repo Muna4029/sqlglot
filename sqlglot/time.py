@@ -1,5 +1,5 @@
-import typing as t
 import datetime
+import typing as t
 
 # The generic time format is based on python time.strftime.
 # https://docs.python.org/3/library/time.html#time.strftime

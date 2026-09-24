@@ -3,7 +3,7 @@ from setuptools import setup
 
 def sqlglotrs_version():
     with open("sqlglotrs/Cargo.toml", encoding="utf-8") as fd:
-        for line in fd.readlines():
+        for line in fd:
             if line.strip().startswith("version"):
                 return line.split("=")[1].strip().strip('"')
     raise ValueError("Could not find version in Cargo.toml")

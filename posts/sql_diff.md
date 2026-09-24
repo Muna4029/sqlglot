@@ -88,6 +88,7 @@ For reasons that will become clear shortly, we actually need to compute bigram h
 ```python
 from collections import defaultdict
 
+
 def bigram_histo(string):
     count = max(0, len(string) - 1)
     bigram_histo = defaultdict(int)
@@ -107,9 +108,7 @@ def dice_coefficient(source, target):
     source_histo = bigram_histo(source.sql())
     target_histo = bigram_histo(target.sql())
 
-    total_grams = (
-        sum(source_histo.values()) + sum(target_histo.values())
-    )
+    total_grams = sum(source_histo.values()) + sum(target_histo.values())
     if not total_grams:
         return 1.0 if source == target else 0.0
 
@@ -143,9 +142,7 @@ target_leaves = _get_leaves(self._target)
 for source_leaf in source_leaves:
     for target_leaf in target_leaves:
         if _is_same_type(source_leaf, target_leaf):
-            similarity_score = dice_coefficient(
-                source_leaf, target_leaf
-            )
+            similarity_score = dice_coefficient(source_leaf, target_leaf)
             if similarity_score >= 0.6:
                 heappush(
                     candidate_matchings,
@@ -166,10 +163,7 @@ Finally, we build the initial matching set by picking leaf pairs with the highes
 matching_set = set()
 while candidate_matchings:
     _, _, source_leaf, target_leaf = heappop(candidate_matchings)
-    if (
-        source_leaf in unmatched_source_nodes
-        and target_leaf in unmatched_target_nodes
-    ):
+    if source_leaf in unmatched_source_nodes and target_leaf in unmatched_target_nodes:
         matching_set.add((source_leaf, target_leaf))
         unmatched_source_nodes.remove(source_leaf)
         unmatched_target_nodes.remove(target_leaf)
@@ -219,11 +213,7 @@ for source_node in unmatched_source_nodes.copy():
             else:
                 leaf_similarity_score = 0.0
 
-            adjusted_t = (
-                0.6
-                if min(len(source_leaves), len(target_leaves)) > 4
-                else 0.4
-            )
+            adjusted_t = 0.6 if min(len(source_leaves), len(target_leaves)) > 4 else 0.4
 
             if leaf_similarity_score >= 0.8 or (
                 leaf_similarity_score >= adjusted_t
@@ -262,13 +252,8 @@ Traversing the matching set requires a little more thought:
 
 ```python
 for source_node, target_node in matching_set:
-    if (
-        not isinstance(source_node, LEAF_EXPRESSION_TYPES)
-        or source_node == target_node
-    ):
-        move_edits = generate_move_edits(
-            source_node, target_node, matching_set
-        )
+    if not isinstance(source_node, LEAF_EXPRESSION_TYPES) or source_node == target_node:
+        move_edits = generate_move_edits(source_node, target_node, matching_set)
         edit_script.extend(move_edits)
         edit_script.append(Keep(source_node, target_node))
     else:
@@ -286,9 +271,7 @@ def generate_move_edits(source, target, matching_set):
 
     lcs = set(
         _longest_common_subsequence(
-            source_children,
-            target_children,
-            lambda l, r: (l, r) in matching_set
+            source_children, target_children, lambda l, r: (l, r) in matching_set
         )
     )
 

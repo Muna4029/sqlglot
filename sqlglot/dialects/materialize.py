@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from sqlglot import exp
-from sqlglot.helper import seq_get
-from sqlglot.dialects.postgres import Postgres
+import typing as t
 
+from sqlglot import exp
+from sqlglot.dialects.postgres import Postgres
+from sqlglot.helper import seq_get
 from sqlglot.tokens import TokenType
 from sqlglot.transforms import (
-    remove_unique_constraints,
     ctas_with_tmp_tables_to_create_tmp_view,
     preprocess,
+    remove_unique_constraints,
 )
-import typing as t
 
 
 class Materialize(Postgres):
@@ -23,7 +23,9 @@ class Materialize(Postgres):
         LAMBDAS = {
             **Postgres.Parser.LAMBDAS,
             TokenType.FARROW: lambda self, expressions: self.expression(
-                exp.Kwarg, this=seq_get(expressions, 0), expression=self._parse_assignment()
+                exp.Kwarg,
+                this=seq_get(expressions, 0),
+                expression=self._parse_assignment(),
             ),
         }
 
@@ -47,7 +49,9 @@ class Materialize(Postgres):
             if not self._match(TokenType.R_BRACKET):
                 self.raise_error("Expecting ]")
 
-            return self.expression(exp.ToMap, this=self.expression(exp.Struct, expressions=entries))
+            return self.expression(
+                exp.ToMap, this=self.expression(exp.Struct, expressions=entries)
+            )
 
     class Generator(Postgres.Generator):
         SUPPORTS_CREATE_TABLE_LIKE = False
@@ -77,7 +81,10 @@ class Materialize(Postgres):
                     return f"{self.expressions(expression, flat=True)} LIST"
                 return "LIST"
 
-            if expression.is_type(exp.DataType.Type.MAP) and len(expression.expressions) == 2:
+            if (
+                expression.is_type(exp.DataType.Type.MAP)
+                and len(expression.expressions) == 2
+            ):
                 key, value = expression.expressions
                 return f"MAP[{self.sql(key)} => {self.sql(value)}]"
 

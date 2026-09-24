@@ -125,7 +125,9 @@ class TestBuild(unittest.TestCase):
                 "SELECT x FROM tbl WHERE FALSE",
             ),
             (
-                lambda: select("x").from_("tbl").where("x > 0").where("x < 9", append=False),
+                lambda: (
+                    select("x").from_("tbl").where("x > 0").where("x < 9", append=False)
+                ),
                 "SELECT x FROM tbl WHERE x < 9",
             ),
             (
@@ -157,7 +159,12 @@ class TestBuild(unittest.TestCase):
                 "SELECT x, y FROM tbl GROUP BY x, y",
             ),
             (
-                lambda: select("x", "y", "z", "a").from_("tbl").group_by("x, y", "z").group_by("a"),
+                lambda: (
+                    select("x", "y", "z", "a")
+                    .from_("tbl")
+                    .group_by("x, y", "z")
+                    .group_by("a")
+                ),
                 "SELECT x, y, z, a FROM tbl GROUP BY x, y, z, a",
             ),
             (
@@ -172,7 +179,10 @@ class TestBuild(unittest.TestCase):
                 lambda: select("x").distinct(distinct=True).from_("tbl"),
                 "SELECT DISTINCT x FROM tbl",
             ),
-            (lambda: select("x").distinct(distinct=False).from_("tbl"), "SELECT x FROM tbl"),
+            (
+                lambda: select("x").distinct(distinct=False).from_("tbl"),
+                "SELECT x FROM tbl",
+            ),
             (
                 lambda: select("x").lateral("OUTER explode(y) tbl2 AS z").from_("tbl"),
                 "SELECT x FROM tbl LATERAL VIEW OUTER EXPLODE(y) tbl2 AS z",
@@ -186,7 +196,11 @@ class TestBuild(unittest.TestCase):
                 "SELECT x FROM tbl JOIN tbl2 ON tbl.y = tbl2.y",
             ),
             (
-                lambda: select("x").from_("tbl").join("tbl2", on=["tbl.y = tbl2.y", "a = b"]),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join("tbl2", on=["tbl.y = tbl2.y", "a = b"])
+                ),
                 "SELECT x FROM tbl JOIN tbl2 ON tbl.y = tbl2.y AND a = b",
             ),
             (
@@ -194,46 +208,60 @@ class TestBuild(unittest.TestCase):
                 "SELECT x FROM tbl LEFT OUTER JOIN tbl2",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join(exp.Table(this="tbl2"), join_type="left outer"),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join(exp.Table(this="tbl2"), join_type="left outer")
+                ),
                 "SELECT x FROM tbl LEFT OUTER JOIN tbl2",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join(exp.Table(this="tbl2"), join_type="left outer", join_alias="foo"),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join(
+                        exp.Table(this="tbl2"), join_type="left outer", join_alias="foo"
+                    )
+                ),
                 "SELECT x FROM tbl LEFT OUTER JOIN tbl2 AS foo",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join(select("y").from_("tbl2"), join_type="left outer"),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join(select("y").from_("tbl2"), join_type="left outer")
+                ),
                 "SELECT x FROM tbl LEFT OUTER JOIN (SELECT y FROM tbl2)",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join(
-                    select("y").from_("tbl2").subquery("aliased"),
-                    join_type="left outer",
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join(
+                        select("y").from_("tbl2").subquery("aliased"),
+                        join_type="left outer",
+                    )
                 ),
                 "SELECT x FROM tbl LEFT OUTER JOIN (SELECT y FROM tbl2) AS aliased",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join(
-                    select("y").from_("tbl2"),
-                    join_type="left outer",
-                    join_alias="aliased",
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join(
+                        select("y").from_("tbl2"),
+                        join_type="left outer",
+                        join_alias="aliased",
+                    )
                 ),
                 "SELECT x FROM tbl LEFT OUTER JOIN (SELECT y FROM tbl2) AS aliased",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join(parse_one("left join x", into=exp.Join), on="a=b"),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join(parse_one("left join x", into=exp.Join), on="a=b")
+                ),
                 "SELECT x FROM tbl LEFT JOIN x ON a = b",
             ),
             (
@@ -241,34 +269,45 @@ class TestBuild(unittest.TestCase):
                 "SELECT x FROM tbl LEFT JOIN x ON a = b",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join("select b from tbl2", on="a=b", join_type="left"),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join("select b from tbl2", on="a=b", join_type="left")
+                ),
                 "SELECT x FROM tbl LEFT JOIN (SELECT b FROM tbl2) ON a = b",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .join(
-                    "select b from tbl2",
-                    on="a=b",
-                    join_type="left",
-                    join_alias="aliased",
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .join(
+                        "select b from tbl2",
+                        on="a=b",
+                        join_type="left",
+                        join_alias="aliased",
+                    )
                 ),
                 "SELECT x FROM tbl LEFT JOIN (SELECT b FROM tbl2) AS aliased ON a = b",
             ),
             (
-                lambda: select("x", "y", "z")
-                .from_("merged_df")
-                .join("vte_diagnosis_df", using=["patient_id", "encounter_id"]),
+                lambda: (
+                    select("x", "y", "z")
+                    .from_("merged_df")
+                    .join("vte_diagnosis_df", using=["patient_id", "encounter_id"])
+                ),
                 "SELECT x, y, z FROM merged_df JOIN vte_diagnosis_df USING (patient_id, encounter_id)",
             ),
             (
-                lambda: select("x", "y", "z")
-                .from_("merged_df")
-                .join(
-                    "vte_diagnosis_df",
-                    using=[exp.to_identifier("patient_id"), exp.to_identifier("encounter_id")],
+                lambda: (
+                    select("x", "y", "z")
+                    .from_("merged_df")
+                    .join(
+                        "vte_diagnosis_df",
+                        using=[
+                            exp.to_identifier("patient_id"),
+                            exp.to_identifier("encounter_id"),
+                        ],
+                    )
                 ),
                 "SELECT x, y, z FROM merged_df JOIN vte_diagnosis_df USING (patient_id, encounter_id)",
             ),
@@ -297,7 +336,12 @@ class TestBuild(unittest.TestCase):
                 "SELECT x FROM foo JOIN bla USING (bob)",
             ),
             (
-                lambda: select("x", "COUNT(y)").from_("tbl").group_by("x").having("COUNT(y) > 0"),
+                lambda: (
+                    select("x", "COUNT(y)")
+                    .from_("tbl")
+                    .group_by("x")
+                    .having("COUNT(y) > 0")
+                ),
                 "SELECT x, COUNT(y) FROM tbl GROUP BY x HAVING COUNT(y) > 0",
             ),
             (
@@ -305,7 +349,9 @@ class TestBuild(unittest.TestCase):
                 "SELECT x FROM tbl ORDER BY y",
             ),
             (
-                lambda: parse_one("select * from x union select * from y").order_by("y"),
+                lambda: parse_one("select * from x union select * from y").order_by(
+                    "y"
+                ),
                 "SELECT * FROM x UNION SELECT * FROM y ORDER BY y",
             ),
             (
@@ -333,19 +379,31 @@ class TestBuild(unittest.TestCase):
                 "hive",
             ),
             (
-                lambda: select("x", "y", "z", "a").from_("tbl").order_by("x, y", "z").order_by("a"),
+                lambda: (
+                    select("x", "y", "z", "a")
+                    .from_("tbl")
+                    .order_by("x, y", "z")
+                    .order_by("a")
+                ),
                 "SELECT x, y, z, a FROM tbl ORDER BY x, y, z, a",
             ),
             (
-                lambda: select("x", "y", "z", "a")
-                .from_("tbl")
-                .cluster_by("x, y", "z")
-                .cluster_by("a"),
+                lambda: (
+                    select("x", "y", "z", "a")
+                    .from_("tbl")
+                    .cluster_by("x, y", "z")
+                    .cluster_by("a")
+                ),
                 "SELECT x, y, z, a FROM tbl CLUSTER BY x, y, z, a",
                 "hive",
             ),
             (
-                lambda: select("x", "y", "z", "a").from_("tbl").sort_by("x, y", "z").sort_by("a"),
+                lambda: (
+                    select("x", "y", "z", "a")
+                    .from_("tbl")
+                    .sort_by("x, y", "z")
+                    .sort_by("a")
+                ),
                 "SELECT x, y, z, a FROM tbl SORT BY x, y, z, a",
                 "hive",
             ),
@@ -359,117 +417,163 @@ class TestBuild(unittest.TestCase):
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl", as_="SELECT x FROM tbl2", materialized=True),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_("tbl", as_="SELECT x FROM tbl2", materialized=True)
+                ),
                 "WITH tbl AS MATERIALIZED (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl", as_="SELECT x FROM tbl2", materialized=False),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_("tbl", as_="SELECT x FROM tbl2", materialized=False)
+                ),
                 "WITH tbl AS NOT MATERIALIZED (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl", as_="SELECT x FROM tbl2", recursive=True),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_("tbl", as_="SELECT x FROM tbl2", recursive=True)
+                ),
                 "WITH RECURSIVE tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl", as_=select("x").from_("tbl2"), recursive=True, materialized=True),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_(
+                        "tbl",
+                        as_=select("x").from_("tbl2"),
+                        recursive=True,
+                        materialized=True,
+                    )
+                ),
                 "WITH RECURSIVE tbl AS MATERIALIZED (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl", as_=select("x").from_("tbl2"), recursive=True, materialized=False),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_(
+                        "tbl",
+                        as_=select("x").from_("tbl2"),
+                        recursive=True,
+                        materialized=False,
+                    )
+                ),
                 "WITH RECURSIVE tbl AS NOT MATERIALIZED (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x").from_("tbl").with_("tbl", as_=select("x").from_("tbl2")),
+                lambda: (
+                    select("x").from_("tbl").with_("tbl", as_=select("x").from_("tbl2"))
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl (x, y)", as_=select("x", "y").from_("tbl2")),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_("tbl (x, y)", as_=select("x", "y").from_("tbl2"))
+                ),
                 "WITH tbl(x, y) AS (SELECT x, y FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .with_("tbl2", as_=select("x").from_("tbl3")),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .with_("tbl2", as_=select("x").from_("tbl3"))
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2), tbl2 AS (SELECT x FROM tbl3) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .from_("tbl")
-                .with_("tbl", as_=select("x", "y").from_("tbl2"))
-                .select("y"),
+                lambda: (
+                    select("x")
+                    .from_("tbl")
+                    .with_("tbl", as_=select("x", "y").from_("tbl2"))
+                    .select("y")
+                ),
                 "WITH tbl AS (SELECT x, y FROM tbl2) SELECT x, y FROM tbl",
             ),
             (
-                lambda: select("x").with_("tbl", as_=select("x").from_("tbl2")).from_("tbl"),
+                lambda: (
+                    select("x").with_("tbl", as_=select("x").from_("tbl2")).from_("tbl")
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .group_by("x"),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .group_by("x")
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl GROUP BY x",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .order_by("x"),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .order_by("x")
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl ORDER BY x",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .limit(10),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .limit(10)
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl LIMIT 10",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .offset(10),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .offset(10)
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl OFFSET 10",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .join("tbl3"),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .join("tbl3")
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl, tbl3",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .distinct(),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .distinct()
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT DISTINCT x FROM tbl",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .where("x > 10"),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .where("x > 10")
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl WHERE x > 10",
             ),
             (
-                lambda: select("x")
-                .with_("tbl", as_=select("x").from_("tbl2"))
-                .from_("tbl")
-                .having("x > 20"),
+                lambda: (
+                    select("x")
+                    .with_("tbl", as_=select("x").from_("tbl2"))
+                    .from_("tbl")
+                    .having("x > 20")
+                ),
                 "WITH tbl AS (SELECT x FROM tbl2) SELECT x FROM tbl HAVING x > 20",
             ),
             (lambda: select("x").from_("tbl").subquery(), "(SELECT x FROM tbl)"),
@@ -483,7 +587,9 @@ class TestBuild(unittest.TestCase):
             ),
             (lambda: from_("tbl").select("x"), "SELECT x FROM tbl"),
             (
-                lambda: parse_one("SELECT a FROM tbl").assert_is(exp.Select).select("b"),
+                lambda: (
+                    parse_one("SELECT a FROM tbl").assert_is(exp.Select).select("b")
+                ),
                 "SELECT a, b FROM tbl",
             ),
             (
@@ -491,9 +597,11 @@ class TestBuild(unittest.TestCase):
                 "CREATE TABLE x AS SELECT * FROM y",
             ),
             (
-                lambda: parse_one("SELECT * FROM y")
-                .assert_is(exp.Select)
-                .ctas("foo.x", properties={"format": "parquet", "y": "2"}),
+                lambda: (
+                    parse_one("SELECT * FROM y")
+                    .assert_is(exp.Select)
+                    .ctas("foo.x", properties={"format": "parquet", "y": "2"})
+                ),
                 "CREATE TABLE foo.x STORED AS PARQUET TBLPROPERTIES ('y'='2') AS SELECT * FROM y",
                 "hive",
             ),
@@ -525,13 +633,15 @@ class TestBuild(unittest.TestCase):
                 "SELECT * FROM x WHERE y = 1 AND z = 1",
             ),
             (
-                lambda: exp.subquery("select x from tbl", "foo").select("x").where("x > 0"),
+                lambda: (
+                    exp.subquery("select x from tbl", "foo").select("x").where("x > 0")
+                ),
                 "SELECT x FROM (SELECT x FROM tbl) AS foo WHERE x > 0",
             ),
             (
-                lambda: exp.subquery("select x from tbl UNION select x from bar", "unioned").select(
-                    "x"
-                ),
+                lambda: exp.subquery(
+                    "select x from tbl UNION select x from bar", "unioned"
+                ).select("x"),
                 "SELECT x FROM (SELECT x FROM tbl UNION SELECT x FROM bar) AS unioned",
             ),
             (lambda: parse_one("(SELECT 1)").select("2"), "(SELECT 1, 2)"),
@@ -552,7 +662,10 @@ class TestBuild(unittest.TestCase):
                 "SELECT 1 UNION SELECT 2 LIMIT 5 OFFSET 2",
             ),
             (lambda: parse_one("(SELECT 1)").subquery(), "((SELECT 1))"),
-            (lambda: parse_one("(SELECT 1)").subquery("alias"), "((SELECT 1)) AS alias"),
+            (
+                lambda: parse_one("(SELECT 1)").subquery("alias"),
+                "((SELECT 1)) AS alias",
+            ),
             (
                 lambda: parse_one("(select * from foo)").with_("foo", "select 1 as c"),
                 "WITH foo AS (SELECT 1 AS c) (SELECT * FROM foo)",
@@ -600,11 +713,13 @@ class TestBuild(unittest.TestCase):
                 "UPDATE my_table SET a = 1, b = 2",
             ),
             (
-                lambda: exp.update("my_table")
-                .set_("x = 1")
-                .where("my_table.id = baz.id")
-                .from_("baz")
-                .with_("baz", "SELECT id FROM foo"),
+                lambda: (
+                    exp.update("my_table")
+                    .set_("x = 1")
+                    .where("my_table.id = baz.id")
+                    .from_("baz")
+                    .with_("baz", "SELECT id FROM foo")
+                ),
                 "WITH baz AS (SELECT id FROM foo) UPDATE my_table SET x = 1 FROM baz WHERE my_table.id = baz.id",
             ),
             (
@@ -636,7 +751,9 @@ class TestBuild(unittest.TestCase):
                 "(SELECT * FROM foo) UNION SELECT * FROM bla",
             ),
             (
-                lambda: parse_one("(SELECT * FROM foo)").union("SELECT * FROM bla", distinct=False),
+                lambda: parse_one("(SELECT * FROM foo)").union(
+                    "SELECT * FROM bla", distinct=False
+                ),
                 "(SELECT * FROM foo) UNION ALL SELECT * FROM bla",
             ),
             (
@@ -648,7 +765,9 @@ class TestBuild(unittest.TestCase):
                 "LAG(x) OVER (ORDER BY z) AS a",
             ),
             (
-                lambda: alias(parse_one("LAG(x) OVER (PARTITION BY y ORDER BY z)"), "a"),
+                lambda: alias(
+                    parse_one("LAG(x) OVER (PARTITION BY y ORDER BY z)"), "a"
+                ),
                 "LAG(x) OVER (PARTITION BY y ORDER BY z) AS a",
             ),
             (
@@ -665,27 +784,39 @@ class TestBuild(unittest.TestCase):
                 "(VALUES ('1', 2, NULL), ('2', 3, NULL)) AS alias(col1, col2, col3)",
             ),
             (lambda: exp.delete("y", where="x > 1"), "DELETE FROM y WHERE x > 1"),
-            (lambda: exp.delete("y", where=exp.and_("x > 1")), "DELETE FROM y WHERE x > 1"),
             (
-                lambda: select("AVG(a) OVER b")
-                .from_("table")
-                .window("b AS (PARTITION BY c ORDER BY d)"),
+                lambda: exp.delete("y", where=exp.and_("x > 1")),
+                "DELETE FROM y WHERE x > 1",
+            ),
+            (
+                lambda: (
+                    select("AVG(a) OVER b")
+                    .from_("table")
+                    .window("b AS (PARTITION BY c ORDER BY d)")
+                ),
                 "SELECT AVG(a) OVER b FROM table WINDOW b AS (PARTITION BY c ORDER BY d)",
             ),
             (
-                lambda: select("AVG(a) OVER b", "MIN(c) OVER d")
-                .from_("table")
-                .window("b AS (PARTITION BY e ORDER BY f)")
-                .window("d AS (PARTITION BY g ORDER BY h)"),
+                lambda: (
+                    select("AVG(a) OVER b", "MIN(c) OVER d")
+                    .from_("table")
+                    .window("b AS (PARTITION BY e ORDER BY f)")
+                    .window("d AS (PARTITION BY g ORDER BY h)")
+                ),
                 "SELECT AVG(a) OVER b, MIN(c) OVER d FROM table WINDOW b AS (PARTITION BY e ORDER BY f), d AS (PARTITION BY g ORDER BY h)",
             ),
             (
-                lambda: select("*")
-                .from_("table")
-                .qualify("row_number() OVER (PARTITION BY a ORDER BY b) = 1"),
+                lambda: (
+                    select("*")
+                    .from_("table")
+                    .qualify("row_number() OVER (PARTITION BY a ORDER BY b) = 1")
+                ),
                 "SELECT * FROM table QUALIFY ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) = 1",
             ),
-            (lambda: exp.delete("tbl1", "x = 1").delete("tbl2"), "DELETE FROM tbl2 WHERE x = 1"),
+            (
+                lambda: exp.delete("tbl1", "x = 1").delete("tbl2"),
+                "DELETE FROM tbl2 WHERE x = 1",
+            ),
             (lambda: exp.delete("tbl").where("x = 1"), "DELETE FROM tbl WHERE x = 1"),
             (lambda: exp.delete(exp.table_("tbl")), "DELETE FROM tbl"),
             (
@@ -693,16 +824,22 @@ class TestBuild(unittest.TestCase):
                 "DELETE FROM tbl WHERE x = 1 AND y = 2",
             ),
             (
-                lambda: exp.delete("tbl", "x = 1").where(exp.condition("y = 2").or_("z = 3")),
+                lambda: exp.delete("tbl", "x = 1").where(
+                    exp.condition("y = 2").or_("z = 3")
+                ),
                 "DELETE FROM tbl WHERE x = 1 AND (y = 2 OR z = 3)",
             ),
             (
-                lambda: exp.delete("tbl").where("x = 1").returning("*", dialect="postgres"),
+                lambda: (
+                    exp.delete("tbl").where("x = 1").returning("*", dialect="postgres")
+                ),
                 "DELETE FROM tbl WHERE x = 1 RETURNING *",
                 "postgres",
             ),
             (
-                lambda: exp.delete("tbl", where="x = 1", returning="*", dialect="postgres"),
+                lambda: exp.delete(
+                    "tbl", where="x = 1", returning="*", dialect="postgres"
+                ),
                 "DELETE FROM tbl WHERE x = 1 RETURNING *",
                 "postgres",
             ),
@@ -719,7 +856,9 @@ class TestBuild(unittest.TestCase):
                 "INSERT OVERWRITE TABLE tbl SELECT * FROM tbl2",
             ),
             (
-                lambda: exp.insert("VALUES (1, 2), (3, 4)", "tbl", columns=["cola", "colb"]),
+                lambda: exp.insert(
+                    "VALUES (1, 2), (3, 4)", "tbl", columns=["cola", "colb"]
+                ),
                 "INSERT INTO tbl (cola, colb) VALUES (1, 2), (3, 4)",
             ),
             (
@@ -727,7 +866,9 @@ class TestBuild(unittest.TestCase):
                 'INSERT INTO tbl ("col a") VALUES (1), (2)',
             ),
             (
-                lambda: exp.insert("SELECT * FROM cte", "t").with_("cte", as_="SELECT x FROM tbl"),
+                lambda: exp.insert("SELECT * FROM cte", "t").with_(
+                    "cte", as_="SELECT x FROM tbl"
+                ),
                 "WITH cte AS (SELECT x FROM tbl) INSERT INTO t SELECT * FROM cte",
             ),
             (
@@ -743,12 +884,17 @@ class TestBuild(unittest.TestCase):
                 "WITH cte AS NOT MATERIALIZED (SELECT x FROM tbl) INSERT INTO t SELECT * FROM cte",
             ),
             (
-                lambda: exp.convert((exp.column("x"), exp.column("y"))).isin((1, 2), (3, 4)),
+                lambda: exp.convert((exp.column("x"), exp.column("y"))).isin(
+                    (1, 2), (3, 4)
+                ),
                 "(x, y) IN ((1, 2), (3, 4))",
                 "postgres",
             ),
             (lambda: exp.cast("CAST(x AS INT)", "int"), "CAST(x AS INT)"),
-            (lambda: exp.cast("CAST(x AS TEXT)", "int"), "CAST(CAST(x AS TEXT) AS INT)"),
+            (
+                lambda: exp.cast("CAST(x AS TEXT)", "int"),
+                "CAST(CAST(x AS TEXT) AS INT)",
+            ),
             (
                 lambda: exp.rename_column("table1", "c1", "c2", True),
                 "ALTER TABLE table1 RENAME COLUMN IF EXISTS c1 TO c2",
@@ -807,7 +953,9 @@ class TestBuild(unittest.TestCase):
                         matched=True,
                         then=exp.Update(
                             expressions=[
-                                exp.column("name", "target").eq(exp.column("name", "source"))
+                                exp.column("name", "target").eq(
+                                    exp.column("name", "source")
+                                )
                             ]
                         ),
                     ),
@@ -823,18 +971,24 @@ class TestBuild(unittest.TestCase):
                 "SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4",
             ),
             (
-                lambda: select("x")
-                .with_("var1", as_=select("x").from_("tbl2").subquery(), scalar=True)
-                .from_("tbl")
-                .where("x > var1"),
+                lambda: (
+                    select("x")
+                    .with_(
+                        "var1", as_=select("x").from_("tbl2").subquery(), scalar=True
+                    )
+                    .from_("tbl")
+                    .where("x > var1")
+                ),
                 "WITH (SELECT x FROM tbl2) AS var1 SELECT x FROM tbl WHERE x > var1",
                 "clickhouse",
             ),
             (
-                lambda: select("x")
-                .with_("var1", as_=select("x").from_("tbl2"), scalar=True)
-                .from_("tbl")
-                .where("x > var1"),
+                lambda: (
+                    select("x")
+                    .with_("var1", as_=select("x").from_("tbl2"), scalar=True)
+                    .from_("tbl")
+                    .where("x > var1")
+                ),
                 "WITH (SELECT x FROM tbl2) AS var1 SELECT x FROM tbl WHERE x > var1",
                 "clickhouse",
             ),

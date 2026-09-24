@@ -1,6 +1,7 @@
 import unittest
 
-from sqlglot import parse_one, expressions as exp
+from sqlglot import expressions as exp
+from sqlglot import parse_one
 from sqlglot.transforms import (
     eliminate_distinct_on,
     eliminate_join_marks,
@@ -17,7 +18,9 @@ class TestTransforms(unittest.TestCase):
     def validate(self, transform, sql, target, dialect=None):
         with self.subTest(f"{dialect} - {sql}"):
             self.assertEqual(
-                parse_one(sql, dialect=dialect).transform(transform).sql(dialect=dialect),
+                parse_one(sql, dialect=dialect)
+                .transform(transform)
+                .sql(dialect=dialect),
                 target,
             )
 
@@ -269,7 +272,9 @@ class TestTransforms(unittest.TestCase):
             # if multiple conditions, we check that after transformations the tree remains consistent
             s = "select a.id from a, b where a.id = b.id (+) AND b.d (+) = const"
             tree = eliminate_join_marks(parse_one(s, dialect=dialect))
-            assert all(type(t.parent_select) is exp.Select for t in tree.find_all(exp.Table))
+            assert all(
+                type(t.parent_select) is exp.Select for t in tree.find_all(exp.Table)
+            )
             assert (
                 tree.sql(dialect=dialect)
                 == "SELECT a.id FROM a LEFT JOIN b ON a.id = b.id AND b.d = const"

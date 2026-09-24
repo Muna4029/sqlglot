@@ -205,10 +205,8 @@ Let's use this for a better way to find all tables in a query:
 ```python
 tables = [
     source
-
     # Traverse the Scope tree, not the AST
     for scope in root.traverse()
-
     # `selected_sources` contains sources that have been selected in this scope, e.g. in a FROM or JOIN clause.
     # `alias` is the name of this source in this particular scope.
     # `node` is the AST node instance
@@ -310,13 +308,7 @@ You can also modify an AST or build one from scratch. There are a few ways to do
 
 SQLGlot has methods for programmatically building up expressions similar to how you might in an ORM:
 ```python
-ast = (
-    exp
-    .select("a", "b")
-    .from_("x")
-    .where("b < 4")
-    .limit(10)
-)
+ast = exp.select("a", "b").from_("x").where("b < 4").limit(10)
 ```
 
 > [!WARNING]
@@ -360,9 +352,7 @@ node.replace(node.copy().select("c"))
 You can also instantiate AST nodes directly:
 
 ```python
-col = exp.Column(
-    this=exp.to_identifier("c")
-)
+col = exp.Column(this=exp.to_identifier("c"))
 node.append("expressions", col)
 ```
 
@@ -380,6 +370,7 @@ def transformer(node):
         return exp.func("FUN", node)
     # Or return `node` to do nothing and continue traversing the tree
     return node
+
 
 print(parse_one("SELECT a, b FROM x").transform(transformer))
 # SELECT FUN(a), b FROM x

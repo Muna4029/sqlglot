@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from sqlglot import exp
 from sqlglot.dialects.trino import Trino
 

@@ -8,8 +8,14 @@ from sqlglot.optimizer.isolate_table_selects import isolate_table_selects
 from sqlglot.optimizer.normalize_identifiers import normalize_identifiers
 from sqlglot.optimizer.qualify_columns import (
     pushdown_cte_alias_columns as pushdown_cte_alias_columns_func,
+)
+from sqlglot.optimizer.qualify_columns import (
     qualify_columns as qualify_columns_func,
+)
+from sqlglot.optimizer.qualify_columns import (
     quote_identifiers as quote_identifiers_func,
+)
+from sqlglot.optimizer.qualify_columns import (
     validate_qualify_columns as validate_qualify_columns_func,
 )
 from sqlglot.optimizer.qualify_tables import qualify_tables
@@ -96,7 +102,9 @@ def qualify(
         )
 
     if quote_identifiers:
-        expression = quote_identifiers_func(expression, dialect=dialect, identify=identify)
+        expression = quote_identifiers_func(
+            expression, dialect=dialect, identify=identify
+        )
 
     if validate_qualify_columns:
         validate_qualify_columns_func(expression)

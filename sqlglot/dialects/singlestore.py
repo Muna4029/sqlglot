@@ -1,7 +1,6 @@
-from sqlglot import TokenType
 import typing as t
 
-from sqlglot import exp
+from sqlglot import TokenType, exp
 from sqlglot.dialects.dialect import build_formatted_time
 from sqlglot.dialects.mysql import MySQL
 from sqlglot.generator import unsupported_args
@@ -84,9 +83,15 @@ class SingleStore(MySQL):
     class Generator(MySQL.Generator):
         TRANSFORMS = {
             **MySQL.Generator.TRANSFORMS,
-            exp.TsOrDsToDate: lambda self, e: self.func("TO_DATE", e.this, self.format_time(e)),
-            exp.StrToTime: lambda self, e: self.func("TO_TIMESTAMP", e.this, self.format_time(e)),
-            exp.ToChar: lambda self, e: self.func("TO_CHAR", e.this, self.format_time(e)),
+            exp.TsOrDsToDate: lambda self, e: self.func(
+                "TO_DATE", e.this, self.format_time(e)
+            ),
+            exp.StrToTime: lambda self, e: self.func(
+                "TO_TIMESTAMP", e.this, self.format_time(e)
+            ),
+            exp.ToChar: lambda self, e: self.func(
+                "TO_CHAR", e.this, self.format_time(e)
+            ),
             exp.StrToDate: lambda self, e: self.func(
                 "STR_TO_DATE",
                 e.this,
@@ -268,7 +273,6 @@ class SingleStore(MySQL):
             "commit",
             "committed",
             "_commit_log_tail",
-            "committed",
             "compact",
             "compile",
             "compressed",
@@ -708,7 +712,6 @@ class SingleStore(MySQL):
             "monthname",
             "months_between",
             "move",
-            "mpl",
             "names",
             "named",
             "namespace",
@@ -727,7 +730,6 @@ class SingleStore(MySQL):
             "now",
             "nowait",
             "no_write_to_binlog",
-            "no_query_rewrite",
             "norely",
             "nth_value",
             "ntile",
@@ -782,7 +784,6 @@ class SingleStore(MySQL):
             "passing",
             "password",
             "password_lock_time",
-            "parser",
             "pause",
             "_pause_replay",
             "percent_rank",

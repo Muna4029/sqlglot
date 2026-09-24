@@ -9,8 +9,8 @@ from sqlglot.schema import ensure_schema
 
 if t.TYPE_CHECKING:
     from sqlglot._typing import E
-    from sqlglot.schema import Schema
     from sqlglot.dialects.dialect import DialectType
+    from sqlglot.schema import Schema
 
 
 def isolate_table_selects(
@@ -36,7 +36,9 @@ def isolate_table_selects(
                 continue
 
             if not source.alias:
-                raise OptimizeError("Tables require an alias. Run qualify_tables optimization.")
+                raise OptimizeError(
+                    "Tables require an alias. Run qualify_tables optimization."
+                )
 
             source.replace(
                 exp.select("*")

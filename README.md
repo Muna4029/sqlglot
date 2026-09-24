@@ -92,6 +92,7 @@ Easily translate from one dialect to another. For example, date/time functions v
 
 ```python
 import sqlglot
+
 sqlglot.transpile("SELECT EPOCH_MS(1618088028295)", read="duckdb", write="hive")[0]
 ```
 
@@ -103,6 +104,7 @@ SQLGlot can even translate custom time formats:
 
 ```python
 import sqlglot
+
 sqlglot.transpile("SELECT STRFTIME(x, '%y-%-m-%S')", read="duckdb", write="hive")[0]
 ```
 
@@ -161,7 +163,7 @@ FROM
 """
 
 # Note: MySQL-specific comments (`#`) are converted into standard syntax
-print(sqlglot.transpile(sql, read='mysql', pretty=True)[0])
+print(sqlglot.transpile(sql, read="mysql", pretty=True)[0])
 ```
 
 ```sql
@@ -206,6 +208,7 @@ When the parser detects an error in the syntax, it raises a `ParseError`:
 
 ```python
 import sqlglot
+
 sqlglot.transpile("SELECT foo FROM (SELECT baz FROM t")
 ```
 
@@ -219,6 +222,7 @@ Structured syntax errors are accessible for programmatic use:
 
 ```python
 import sqlglot
+
 try:
     sqlglot.transpile("SELECT foo FROM (SELECT baz FROM t")
 except sqlglot.errors.ParseError as e:
@@ -226,15 +230,17 @@ except sqlglot.errors.ParseError as e:
 ```
 
 ```python
-[{
-  'description': 'Expecting )',
-  'line': 1,
-  'col': 34,
-  'start_context': 'SELECT foo FROM (SELECT baz FROM ',
-  'highlight': 't',
-  'end_context': '',
-  'into_expression': None
-}]
+[
+    {
+        "description": "Expecting )",
+        "line": 1,
+        "col": 34,
+        "start_context": "SELECT foo FROM (SELECT baz FROM ",
+        "highlight": "t",
+        "end_context": "",
+        "into_expression": None,
+    }
+]
 ```
 
 ### Unsupported Errors
@@ -243,7 +249,10 @@ It may not be possible to translate some queries between certain dialects. For t
 
 ```python
 import sqlglot
-sqlglot.transpile("SELECT APPROX_DISTINCT(a, 0.1) FROM foo", read="presto", write="hive")
+
+sqlglot.transpile(
+    "SELECT APPROX_DISTINCT(a, 0.1) FROM foo", read="presto", write="hive"
+)
 ```
 
 ```sql
@@ -255,7 +264,13 @@ This behavior can be changed by setting the [`unsupported_level`](https://github
 
 ```python
 import sqlglot
-sqlglot.transpile("SELECT APPROX_DISTINCT(a, 0.1) FROM foo", read="presto", write="hive", unsupported_level=sqlglot.ErrorLevel.RAISE)
+
+sqlglot.transpile(
+    "SELECT APPROX_DISTINCT(a, 0.1) FROM foo",
+    read="presto",
+    write="hive",
+    unsupported_level=sqlglot.ErrorLevel.RAISE,
+)
 ```
 
 ```
@@ -285,6 +300,7 @@ It's possible to modify a parsed tree:
 
 ```python
 from sqlglot import parse_one
+
 parse_one("SELECT x FROM y").from_("z").sql()
 ```
 
@@ -299,10 +315,12 @@ from sqlglot import exp, parse_one
 
 expression_tree = parse_one("SELECT a FROM x")
 
+
 def transformer(node):
     if isinstance(node, exp.Column) and node.name == "a":
         return parse_one("FUN(a)")
     return node
+
 
 transformed_tree = expression_tree.transform(transformer)
 transformed_tree.sql()
@@ -327,7 +345,7 @@ print(
             FROM x
             WHERE Z = date '2021-01-01' + INTERVAL '1' month OR 1 = 0
         """),
-        schema={"x": {"A": "INT", "B": "INT", "C": "INT", "D": "INT", "Z": "STRING"}}
+        schema={"x": {"A": "INT", "B": "INT", "C": "INT", "D": "INT", "Z": "STRING"}},
     ).sql(pretty=True)
 )
 ```
@@ -351,18 +369,22 @@ You can see the AST version of the parsed SQL by calling `repr`:
 
 ```python
 from sqlglot import parse_one
+
 print(repr(parse_one("SELECT a + 1 AS z")))
 ```
 
 ```python
 Select(
-  expressions=[
-    Alias(
-      this=Add(
-        this=Column(
-          this=Identifier(this=a, quoted=False)),
-        expression=Literal(this=1, is_string=False)),
-      alias=Identifier(this=z, quoted=False))])
+    expressions=[
+        Alias(
+            this=Add(
+                this=Column(this=Identifier(this=a, quoted=False)),
+                expression=Literal(this=1, is_string=False),
+            ),
+            alias=Identifier(this=z, quoted=False),
+        )
+    ]
+)
 ```
 
 ### AST Diff
@@ -371,25 +393,29 @@ SQLGlot can calculate the semantic difference between two expressions and output
 
 ```python
 from sqlglot import diff, parse_one
+
 diff(parse_one("SELECT a + b, c, d"), parse_one("SELECT c, a - b, d"))
 ```
 
 ```python
 [
-  Remove(expression=Add(
-    this=Column(
-      this=Identifier(this=a, quoted=False)),
-    expression=Column(
-      this=Identifier(this=b, quoted=False)))),
-  Insert(expression=Sub(
-    this=Column(
-      this=Identifier(this=a, quoted=False)),
-    expression=Column(
-      this=Identifier(this=b, quoted=False)))),
-  Keep(
-    source=Column(this=Identifier(this=a, quoted=False)),
-    target=Column(this=Identifier(this=a, quoted=False))),
-  ...
+    Remove(
+        expression=Add(
+            this=Column(this=Identifier(this=a, quoted=False)),
+            expression=Column(this=Identifier(this=b, quoted=False)),
+        )
+    ),
+    Insert(
+        expression=Sub(
+            this=Column(this=Identifier(this=a, quoted=False)),
+            expression=Column(this=Identifier(this=b, quoted=False)),
+        )
+    ),
+    Keep(
+        source=Column(this=Identifier(this=a, quoted=False)),
+        target=Column(this=Identifier(this=a, quoted=False)),
+    ),
+    ...,
 ]
 ```
 
@@ -431,6 +457,7 @@ class Custom(Dialect):
             exp.DataType.Type.BOOLEAN: "BOOL",
             exp.DataType.Type.TEXT: "STRING",
         }
+
 
 print(Dialect["custom"])
 ```
@@ -478,7 +505,7 @@ execute(
       ON i.sushi_id = s.id
     GROUP BY o.user_id
     """,
-    tables=tables
+    tables=tables,
 )
 ```
 

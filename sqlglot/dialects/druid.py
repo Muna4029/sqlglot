@@ -1,5 +1,5 @@
 from sqlglot import exp, generator
-from sqlglot.dialects.dialect import rename_func, Dialect
+from sqlglot.dialects.dialect import Dialect, rename_func
 
 
 class Druid(Dialect):

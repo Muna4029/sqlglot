@@ -1,5 +1,5 @@
-import unittest
 import sys
+import unittest
 
 from sqlglot.time import format_time, subsecond_precision
 
