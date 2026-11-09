@@ -124,9 +124,11 @@ class PRQL(Dialect):
 
             selects = [
                 select.transform(
-                    lambda s: (projections[s.name].copy() if s.name in projections else s)
-                    if isinstance(s, exp.Column)
-                    else s,
+                    lambda s: (
+                        (projections[s.name].copy() if s.name in projections else s)
+                        if isinstance(s, exp.Column)
+                        else s
+                    ),
                     copy=False,
                 )
                 for select in selects

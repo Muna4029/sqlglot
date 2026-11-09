@@ -679,8 +679,10 @@ class Snowflake(Dialect):
             "FILE_FORMAT": lambda self: self._parse_file_format_property(),
             "LOCATION": lambda self: self._parse_location_property(),
             "TAG": lambda self: self._parse_tag(),
-            "USING": lambda self: self._match_text_seq("TEMPLATE")
-            and self.expression(exp.UsingTemplateProperty, this=self._parse_statement()),
+            "USING": lambda self: (
+                self._match_text_seq("TEMPLATE")
+                and self.expression(exp.UsingTemplateProperty, this=self._parse_statement())
+            ),
         }
 
         TYPE_CONVERTERS = {
@@ -1213,8 +1215,9 @@ class Snowflake(Dialect):
             exp.Extract: lambda self, e: self.func(
                 "DATE_PART", map_date_part(e.this, self.dialect), e.expression
             ),
-            exp.FileFormatProperty: lambda self,
-            e: f"FILE_FORMAT=({self.expressions(e, 'expressions', sep=' ')})",
+            exp.FileFormatProperty: lambda self, e: (
+                f"FILE_FORMAT=({self.expressions(e, 'expressions', sep=' ')})"
+            ),
             exp.FromTimeZone: lambda self, e: self.func(
                 "CONVERT_TIMEZONE", e.args.get("zone"), "'UTC'", e.this
             ),

@@ -197,8 +197,9 @@ class Spark(Spark2):
             exp.DateFromUnixDate: rename_func("DATE_FROM_UNIX_DATE"),
             exp.GroupConcat: _groupconcat_sql,
             exp.EndsWith: rename_func("ENDSWITH"),
-            exp.PartitionedByProperty: lambda self,
-            e: f"PARTITIONED BY {self.wrap(self.expressions(sqls=[_normalize_partition(e) for e in e.this.expressions], skip_first=True))}",
+            exp.PartitionedByProperty: lambda self, e: (
+                f"PARTITIONED BY {self.wrap(self.expressions(sqls=[_normalize_partition(e) for e in e.this.expressions], skip_first=True))}"
+            ),
             exp.StartsWith: rename_func("STARTSWITH"),
             exp.TsOrDsAdd: _dateadd_sql,
             exp.TimestampAdd: _dateadd_sql,
