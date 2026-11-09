@@ -46,7 +46,7 @@ class TestClickhouse(Validator):
         self.validate_identity("SELECT like")
         self.validate_identity("SELECT STR_TO_DATE(str, fmt, tz)")
         self.validate_identity("SELECT STR_TO_DATE('05 12 2000', '%d %m %Y')")
-        self.validate_identity("SELECT EXTRACT(YEAR FROM toDateTime('2023-02-01'))")
+        self.validate_identity("SELECT EXTRACT(YEAR FROM CAST('2023-02-01' AS Nullable(DateTime)))")
         self.validate_identity("extract(haystack, pattern)")
         self.validate_identity("SELECT * FROM x LIMIT 1 UNION ALL SELECT * FROM y")
         self.validate_identity("SELECT CAST(x AS Tuple(String, Array(Nullable(Float64))))")
@@ -116,10 +116,10 @@ class TestClickhouse(Validator):
             "SELECT * FROM foo ORDER BY bar OFFSET 0 ROWS FETCH NEXT 10 ROWS WITH TIES"
         )
         self.validate_identity(
-            "SELECT DATE_BIN(toDateTime('2023-01-01 14:45:00'), INTERVAL '1' MINUTE, toDateTime('2023-01-01 14:35:30'), 'UTC')",
+            "SELECT DATE_BIN(CAST('2023-01-01 14:45:00' AS Nullable(DateTime)), INTERVAL '1' MINUTE, CAST('2023-01-01 14:35:30' AS Nullable(DateTime)), 'UTC')",
         )
         self.validate_identity(
-            "SELECT CAST(1730098800 AS DateTime64) AS DATETIME, 'test' AS interp ORDER BY DATETIME WITH FILL FROM toDateTime64(1730098800, 3) - INTERVAL '7' HOUR TO toDateTime64(1730185140, 3) - INTERVAL '7' HOUR STEP toIntervalSecond(900) INTERPOLATE (interp)"
+            "SELECT CAST(1730098800 AS DateTime64) AS DATETIME, 'test' AS interp ORDER BY DATETIME WITH FILL FROM CAST(1730098800 AS Nullable(DateTime64)) - INTERVAL '7' HOUR TO CAST(1730185140 AS Nullable(DateTime64)) - INTERVAL '7' HOUR STEP toIntervalSecond(900) INTERPOLATE (interp)"
         )
         self.validate_identity(
             "SELECT number, COUNT() OVER (PARTITION BY number % 3) AS partition_count FROM numbers(10) WINDOW window_name AS (PARTITION BY number) QUALIFY partition_count = 4 ORDER BY number"
@@ -137,16 +137,16 @@ class TestClickhouse(Validator):
             "ATTACH DATABASE DEFAULT ENGINE = ORDINARY", check_command_warning=True
         )
         self.validate_identity(
-            "SELECT n, source FROM (SELECT toFloat32(number % 10) AS n, 'original' AS source FROM numbers(10) WHERE number % 3 = 1) ORDER BY n WITH FILL"
+            "SELECT n, source FROM (SELECT CAST(number % 10 AS Nullable(Float32)) AS n, 'original' AS source FROM numbers(10) WHERE number % 3 = 1) ORDER BY n WITH FILL"
         )
         self.validate_identity(
-            "SELECT n, source FROM (SELECT toFloat32(number % 10) AS n, 'original' AS source FROM numbers(10) WHERE number % 3 = 1) ORDER BY n WITH FILL FROM 0 TO 5.51 STEP 0.5"
+            "SELECT n, source FROM (SELECT CAST(number % 10 AS Nullable(Float32)) AS n, 'original' AS source FROM numbers(10) WHERE number % 3 = 1) ORDER BY n WITH FILL FROM 0 TO 5.51 STEP 0.5"
         )
         self.validate_identity(
-            "SELECT toDate((number * 10) * 86400) AS d1, toDate(number * 86400) AS d2, 'original' AS source FROM numbers(10) WHERE (number % 3) = 1 ORDER BY d2 WITH FILL, d1 WITH FILL STEP 5"
+            "SELECT CAST((number * 10) * 86400 AS Nullable(DATE)) AS d1, CAST(number * 86400 AS Nullable(DATE)) AS d2, 'original' AS source FROM numbers(10) WHERE (number % 3) = 1 ORDER BY d2 WITH FILL, d1 WITH FILL STEP 5"
         )
         self.validate_identity(
-            "SELECT n, source, inter FROM (SELECT toFloat32(number % 10) AS n, 'original' AS source, number AS inter FROM numbers(10) WHERE number % 3 = 1) ORDER BY n WITH FILL FROM 0 TO 5.51 STEP 0.5 INTERPOLATE (inter AS inter + 1)"
+            "SELECT n, source, inter FROM (SELECT CAST(number % 10 AS Nullable(Float32)) AS n, 'original' AS source, number AS inter FROM numbers(10) WHERE number % 3 = 1) ORDER BY n WITH FILL FROM 0 TO 5.51 STEP 0.5 INTERPOLATE (inter AS inter + 1)"
         )
         self.validate_identity(
             "SELECT SUM(1) AS impressions, arrayJoin(cities) AS city, arrayJoin(browsers) AS browser FROM (SELECT ['Istanbul', 'Berlin', 'Bobruisk'] AS cities, ['Firefox', 'Chrome', 'Chrome'] AS browsers) GROUP BY 2, 3"
@@ -208,8 +208,8 @@ class TestClickhouse(Validator):
             "INSERT INTO tab VALUES ((map('key1', 1, 'key2', 10))), ((map('key1', 2, 'key2', 20))), ((map('key1', 3, 'key2', 30)))",
         )
         self.validate_identity(
-            "SELECT (toUInt8('1') + toUInt8('2')) IS NOT NULL",
-            "SELECT NOT ((toUInt8('1') + toUInt8('2')) IS NULL)",
+            "SELECT (CAST('1' AS Nullable(UInt8)) + CAST('2' AS Nullable(UInt8))) IS NOT NULL",
+            "SELECT NOT ((CAST('1' AS Nullable(UInt8)) + CAST('2' AS Nullable(UInt8))) IS NULL)",
         )
         self.validate_identity(
             "SELECT $1$foo$1$",
@@ -581,14 +581,14 @@ class TestClickhouse(Validator):
         self.validate_identity("ALTER TABLE visits DROP PARTITION 201901")
         self.validate_identity("ALTER TABLE visits DROP PARTITION ALL")
         self.validate_identity(
-            "ALTER TABLE visits DROP PARTITION tuple(toYYYYMM(toDate('2019-01-25')))"
+            "ALTER TABLE visits DROP PARTITION tuple(toYYYYMM(CAST('2019-01-25' AS Nullable(DATE))))"
         )
         self.validate_identity("ALTER TABLE visits DROP PARTITION ID '201901'")
 
         self.validate_identity("ALTER TABLE visits REPLACE PARTITION 201901 FROM visits_tmp")
         self.validate_identity("ALTER TABLE visits REPLACE PARTITION ALL FROM visits_tmp")
         self.validate_identity(
-            "ALTER TABLE visits REPLACE PARTITION tuple(toYYYYMM(toDate('2019-01-25'))) FROM visits_tmp"
+            "ALTER TABLE visits REPLACE PARTITION tuple(toYYYYMM(CAST('2019-01-25' AS Nullable(DATE)))) FROM visits_tmp"
         )
         self.validate_identity("ALTER TABLE visits REPLACE PARTITION ID '201901' FROM visits_tmp")
         self.validate_identity("ALTER TABLE visits ON CLUSTER test_cluster DROP COLUMN col1")
@@ -622,7 +622,7 @@ class TestClickhouse(Validator):
         )
         self.validate_identity("SELECT * APPLY(sum), COLUMNS('col') APPLY(sum) APPLY(avg) FROM t")
         self.validate_identity(
-            "SELECT * FROM ABC WHERE hasAny(COLUMNS('.*field') APPLY(toUInt64) APPLY(to), (SELECT groupUniqArray(toUInt64(field))))"
+            "SELECT * FROM ABC WHERE hasAny(COLUMNS('.*field') APPLY(toUInt64) APPLY(to), (SELECT groupUniqArray(CAST(field AS Nullable(UInt64)))))"
         )
         self.validate_identity("SELECT col apply", "SELECT col AS apply")
         self.validate_identity(
