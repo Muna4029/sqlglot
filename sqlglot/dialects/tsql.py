@@ -653,9 +653,11 @@ class TSQL(Dialect):
         # The DCOLON (::) operator serves as a scope resolution (exp.ScopeResolution) operator in T-SQL
         COLUMN_OPERATORS = {
             **parser.Parser.COLUMN_OPERATORS,
-            TokenType.DCOLON: lambda self, this, to: self.expression(exp.Cast, this=this, to=to)
-            if isinstance(to, exp.DataType) and to.this != exp.DataType.Type.USERDEFINED
-            else self.expression(exp.ScopeResolution, this=this, expression=to),
+            TokenType.DCOLON: lambda self, this, to: (
+                self.expression(exp.Cast, this=this, to=to)
+                if isinstance(to, exp.DataType) and to.this != exp.DataType.Type.USERDEFINED
+                else self.expression(exp.ScopeResolution, this=this, expression=to)
+            ),
         }
 
         def _parse_alter_table_set(self) -> exp.AlterSet:
