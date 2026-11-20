@@ -23,7 +23,10 @@ def _lag_lead_sql(self, expression: exp.Lag | exp.Lead) -> str:
 
 
 # Accept both DATE_TRUNC(datetime, unit) and DATE_TRUNC(unit, datetime)
-def _build_date_trunc(args: t.List[exp.Expression]) -> exp.Expression:
+from typing import List
+
+
+def _build_date_trunc(args: List[exp.Expression]) -> exp.Expression:
     a0, a1 = seq_get(args, 0), seq_get(args, 1)
 
     def _is_unit_like(e: exp.Expression | None) -> bool:
@@ -33,7 +36,7 @@ def _build_date_trunc(args: t.List[exp.Expression]) -> exp.Expression:
         return not any(ch.isdigit() for ch in text)
 
     # Determine which argument is the unit
-    unit, this = a0, a1 if _is_unit_like(a0) else a1, a0
+    unit, this = (a0, a1) if _is_unit_like(a0) else (a1, a0)
 
     return exp.TimestampTrunc(this=this, unit=unit)
 
@@ -59,11 +62,15 @@ class Doris(MySQL):
         PROPERTY_PARSERS = {
             **MySQL.Parser.PROPERTY_PARSERS,
             "PROPERTIES": lambda self: self._parse_wrapped_properties(),
-            "UNIQUE": lambda self: self._parse_composite_key_property(exp.UniqueKeyProperty),
+            "UNIQUE": lambda self: self._parse_composite_key_property(
+                exp.UniqueKeyProperty
+            ),
             "PARTITION BY": lambda self: self._parse_partition_by_opt_range(),
         }
 
-        def _parse_partitioning_granularity_dynamic(self) -> exp.PartitionByRangePropertyDynamic:
+        def _parse_partitioning_granularity_dynamic(
+            self,
+        ) -> exp.PartitionByRangePropertyDynamic:
             self._match_text_seq("FROM")
             start = self._parse_wrapped(self._parse_string)
             self._match_text_seq("TO")
@@ -87,16 +94,22 @@ class Doris(MySQL):
                 if len(values) == 1 and values[0].name.upper() == "MAXVALUE":
                     values = [exp.var("MAXVALUE")]
 
-                part_range = self.expression(exp.PartitionRange, this=name, expressions=values)
+                part_range = self.expression(
+                    exp.PartitionRange, this=name, expressions=values
+                )
                 return self.expression(exp.Partition, expressions=[part_range])
 
             self._match(TokenType.L_BRACKET)
-            values = self._parse_csv(lambda: self._parse_wrapped_csv(self._parse_expression))
+            values = self._parse_csv(
+                lambda: self._parse_wrapped_csv(self._parse_expression)
+            )
 
             self._match(TokenType.R_BRACKET)
             self._match(TokenType.R_PAREN)
 
-            part_range = self.expression(exp.PartitionRange, this=name, expressions=values)
+            part_range = self.expression(
+                exp.PartitionRange, this=name, expressions=values
+            )
             return self.expression(exp.Partition, expressions=[part_range])
 
         def _parse_partition_by_opt_range(
@@ -109,7 +122,9 @@ class Doris(MySQL):
             self._match_l_paren()
 
             if self._match_text_seq("FROM", advance=False):
-                create_expressions = self._parse_csv(self._parse_partitioning_granularity_dynamic)
+                create_expressions = self._parse_csv(
+                    self._parse_partitioning_granularity_dynamic
+                )
             elif self._match_text_seq("PARTITION", advance=False):
                 create_expressions = self._parse_csv(self._parse_partition_definition)
             else:
@@ -156,11 +171,17 @@ class Doris(MySQL):
             exp.ArrayToString: rename_func("ARRAY_JOIN"),
             exp.ArrayUniqueAgg: rename_func("COLLECT_SET"),
             exp.CurrentTimestamp: lambda self, _: self.func("NOW"),
-            exp.DateTrunc: lambda self, e: self.func("DATE_TRUNC", e.this, unit_to_str(e)),
-            exp.GroupConcat: lambda self, e: self.func(
-                "GROUP_CONCAT", e.this, e.args.get("separator") or exp.Literal.string(",")
+            exp.DateTrunc: lambda self, e: self.func(
+                "DATE_TRUNC", e.this, unit_to_str(e)
             ),
-            exp.JSONExtractScalar: lambda self, e: self.func("JSON_EXTRACT", e.this, e.expression),
+            exp.GroupConcat: lambda self, e: self.func(
+                "GROUP_CONCAT",
+                e.this,
+                e.args.get("separator") or exp.Literal.string(","),
+            ),
+            exp.JSONExtractScalar: lambda self, e: self.func(
+                "JSON_EXTRACT", e.this, e.expression
+            ),
             exp.Lag: _lag_lead_sql,
             exp.Lead: _lag_lead_sql,
             exp.Map: rename_func("ARRAY_MAP"),
@@ -170,12 +191,16 @@ class Doris(MySQL):
             exp.SchemaCommentProperty: lambda self, e: self.naked_property(e),
             exp.Split: rename_func("SPLIT_BY_STRING"),
             exp.StringToArray: rename_func("SPLIT_BY_STRING"),
-            exp.StrToUnix: lambda self, e: self.func("UNIX_TIMESTAMP", e.this, self.format_time(e)),
+            exp.StrToUnix: lambda self, e: self.func(
+                "UNIX_TIMESTAMP", e.this, self.format_time(e)
+            ),
             exp.TimeStrToDate: rename_func("TO_DATE"),
             exp.TsOrDsAdd: lambda self, e: self.func("DATE_ADD", e.this, e.expression),
             exp.TsOrDsToDate: lambda self, e: self.func("TO_DATE", e.this),
             exp.TimeToUnix: rename_func("UNIX_TIMESTAMP"),
-            exp.TimestampTrunc: lambda self, e: self.func("DATE_TRUNC", e.this, unit_to_str(e)),
+            exp.TimestampTrunc: lambda self, e: self.func(
+                "DATE_TRUNC", e.this, unit_to_str(e)
+            ),
             exp.UnixToStr: lambda self, e: self.func(
                 "FROM_UNIXTIME", e.this, time_format("doris")(self, e)
             ),
@@ -702,7 +727,9 @@ class Doris(MySQL):
             create_sql = ", ".join(self.sql(e) for e in create_expressions)
             return f"PARTITION BY RANGE ({partition_expressions}) ({create_sql})"
 
-        def partitionedbyproperty_sql(self, expression: exp.PartitionedByProperty) -> str:
+        def partitionedbyproperty_sql(
+            self, expression: exp.PartitionedByProperty
+        ) -> str:
             node = expression.this
             if isinstance(node, exp.Schema):
                 parts = ", ".join(self.sql(e) for e in node.expressions)
@@ -716,5 +743,7 @@ class Doris(MySQL):
                 sep = " "
             return super().table_sql(expression, sep=sep)
 
-        def alterrename_sql(self, expression: exp.AlterRename, include_to: bool = True) -> str:
+        def alterrename_sql(
+            self, expression: exp.AlterRename, include_to: bool = True
+        ) -> str:
             return super().alterrename_sql(expression, include_to=False)
