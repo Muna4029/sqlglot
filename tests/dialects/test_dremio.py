@@ -1,6 +1,6 @@
-from tests.dialects.test_dialect import Validator
-from sqlglot import parse_one, exp, UnsupportedError, ErrorLevel, transpile, ParseError
+from sqlglot import ErrorLevel, ParseError, UnsupportedError, exp, parse_one, transpile
 from sqlglot.optimizer.annotate_types import annotate_types
+from tests.dialects.test_dialect import Validator
 
 
 class TestDremio(Validator):
@@ -63,7 +63,8 @@ class TestDremio(Validator):
             "SELECT * FROM t ORDER BY a NULLS LAST", "SELECT * FROM t ORDER BY a"
         )
         self.validate_identity(
-            "SELECT * FROM t ORDER BY a DESC NULLS LAST", "SELECT * FROM t ORDER BY a DESC"
+            "SELECT * FROM t ORDER BY a DESC NULLS LAST",
+            "SELECT * FROM t ORDER BY a DESC",
         )
 
         # If the clause is not the default, it must be kept
@@ -138,20 +139,26 @@ class TestDremio(Validator):
         to_char = self.validate_identity("TO_CHAR(3.14, '#.#')").assert_is(exp.ToChar)
         assert to_char.args["is_numeric"] is True
 
-        to_char = self.validate_identity("TO_CHAR(columnname, '#.##')").assert_is(exp.ToChar)
+        to_char = self.validate_identity("TO_CHAR(columnname, '#.##')").assert_is(
+            exp.ToChar
+        )
         assert to_char.args["is_numeric"] is True
 
         # Non-numeric formats or columns should have is_numeric=None or False
         to_char = self.validate_identity("TO_CHAR(5555)").assert_is(exp.ToChar)
         assert not to_char.args.get("is_numeric")
 
-        to_char = self.validate_identity("TO_CHAR(3.14, columnname)").assert_is(exp.ToChar)
+        to_char = self.validate_identity("TO_CHAR(3.14, columnname)").assert_is(
+            exp.ToChar
+        )
         assert not to_char.args.get("is_numeric")
 
         to_char = self.validate_identity("TO_CHAR(123, 'abcd')").assert_is(exp.ToChar)
         assert not to_char.args.get("is_numeric")
 
-        to_char = self.validate_identity("TO_CHAR(3.14, UPPER('abcd'))").assert_is(exp.ToChar)
+        to_char = self.validate_identity("TO_CHAR(3.14, UPPER('abcd'))").assert_is(
+            exp.ToChar
+        )
         assert not to_char.args.get("is_numeric")
 
     def test_time_diff(self):
@@ -175,7 +182,9 @@ class TestDremio(Validator):
             "SELECT DATE_SUB(col, 2, 'HOUR')", "SELECT TIMESTAMPADD(HOUR, -2, col)"
         )
 
-        self.validate_identity("SELECT DATE_ADD(col, 2, 'DAY')", "SELECT DATE_ADD(col, 2)")
+        self.validate_identity(
+            "SELECT DATE_ADD(col, 2, 'DAY')", "SELECT DATE_ADD(col, 2)"
+        )
 
         self.validate_identity(
             "SELECT DATE_SUB(col, a, 'HOUR')", "SELECT TIMESTAMPADD(HOUR, a * -1, col)"
@@ -185,11 +194,13 @@ class TestDremio(Validator):
         ts = "CAST('2025-08-18 15:30:00' AS TIMESTAMP)"
 
         self.validate_identity(
-            f"SELECT DATE_FORMAT({ts}, 'yyyy-mm-dd')",
-            f"SELECT TO_CHAR({ts}, 'yyyy-mm-dd')",
+            f"SELECT DATE_FORMAT(CAST({ts} AS TIMESTAMP), 'yyyy-mm-dd')",
+            f"SELECT TO_CHAR(CAST({ts} AS TIMESTAMP), 'yyyy-mm-dd')",
         )
 
         self.validate_all(
-            "SELECT DATE_FORMAT(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
-            "SELECT TO_CHAR(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
+            {
+                "query": "SELECT DATE_FORMAT(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
+                "expected": "SELECT TO_CHAR(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
+            }
         )

@@ -3,11 +3,11 @@ from __future__ import annotations
 import typing as t
 
 from sqlglot import expressions as exp
-from sqlglot import parser, generator, tokens
+from sqlglot import generator, parser, tokens
 from sqlglot.dialects.dialect import (
     Dialect,
-    build_timetostr_or_tochar,
     build_formatted_time,
+    build_timetostr_or_tochar,
     rename_func,
     unit_to_var,
 )
@@ -30,20 +30,31 @@ def _date_delta_sql(name: str) -> t.Callable[[Dremio.Generator, DATE_DELTA], str
         increment = expression.expression
         if isinstance(expression, exp.DateSub):
             if isinstance(increment, exp.Literal):
-                value = increment.to_py() if increment.is_number else int(increment.name)
+                value = (
+                    increment.to_py() if increment.is_number else int(increment.name)
+                )
                 increment = exp.Literal.number(value * -1)
             else:
                 increment *= exp.Literal.number(-1)
-        return self.func("TIMESTAMPADD", unit_to_var(expression), increment, expression.this)
+        return self.func(
+            "TIMESTAMPADD", unit_to_var(expression), increment, expression.this
+        )
 
     return _delta_sql
 
 
-def to_char_is_numeric_handler(args: t.List, dialect: DialectType) -> exp.TimeToStr | exp.ToChar:
+def to_char_is_numeric_handler(
+    args: t.List, dialect: DialectType
+) -> exp.TimeToStr | exp.ToChar:
     expression = build_timetostr_or_tochar(args, dialect)
     fmt = seq_get(args, 1)
 
-    if fmt and isinstance(expression, exp.ToChar) and fmt.is_string and "#" in fmt.name:
+    if (
+        fmt
+        and isinstance(expression, exp.ToChar)
+        and isinstance(fmt, str)
+        and "#" in fmt
+    ):
         # Only mark as numeric if format is a literal containing #
         expression.set("is_numeric", True)
 
@@ -145,7 +156,9 @@ class Dremio(Dialect):
         TRANSFORMS = {
             **generator.Generator.TRANSFORMS,
             exp.ToChar: rename_func("TO_CHAR"),
-            exp.TimeToStr: lambda self, e: self.func("TO_CHAR", e.this, self.format_time(e)),
+            exp.TimeToStr: lambda self, e: self.func(
+                "TO_CHAR", e.this, self.format_time(e)
+            ),
             exp.DateAdd: _date_delta_sql("DATE_ADD"),
             exp.DateSub: _date_delta_sql("DATE_SUB"),
         }
