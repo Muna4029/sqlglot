@@ -189,7 +189,7 @@ class TestDremio(Validator):
             f"SELECT TO_CHAR({ts}, 'yyyy-mm-dd')",
         )
 
-        self.validate_all(
+        self.validate_identity(
             "SELECT DATE_FORMAT(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
             "SELECT TO_CHAR(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
         )
