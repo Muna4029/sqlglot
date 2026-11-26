@@ -12,7 +12,7 @@ from sqlglot.helper import ensure_collection, find_new_name, seq_get
 
 logger = logging.getLogger("sqlglot")
 
-TRAVERSABLES = (exp.Query, exp.DDL, exp.DML)
+TRAVERSABLES = (exp.Query, exp.DDL, exp.DML, exp.Select, exp.Subquery)
 
 
 class ScopeType(Enum):
@@ -168,7 +168,7 @@ class Scope:
             self._collect()
 
     def walk(self, bfs=True, prune=None):
-        return walk_in_scope(self.expression, bfs=bfs, prune=None)
+        return walk_in_scope(self.expression, bfs=bfs, prune=prune)
 
     def find(self, *expression_types, bfs=True):
         return find_in_scope(self.expression, expression_types, bfs=bfs)
@@ -407,8 +407,9 @@ class Scope:
             list[exp.JoinHint]: Join hints that are referenced within the scope
         """
         if self._join_hints is None:
-            return []
-        return self._join_hints
+            # Ensure collection has run so join hints are populated if available
+            self._ensure_collected()
+        return self._join_hints or []
 
     @property
     def pivots(self):
@@ -471,7 +472,7 @@ class Scope:
 
     def rename_source(self, old_name, new_name):
         """Rename a source in this scope"""
-        columns = self.sources.pop(old_name or "", [])
+        columns = self.sources.pop(old_name, [])
         self.sources[new_name] = columns
 
     def add_source(self, name, source):
@@ -825,7 +826,7 @@ def _traverse_udtfs(scope):
             for child_scope in _traverse_scope(
                 scope.branch(
                     expression,
-                    scope_type=ScopeType.SUBQUERY,
+                    scope_type=ScopeType.DERIVED_TABLE,
                     outer_columns=expression.alias_column_names,
                 )
             ):
@@ -833,7 +834,8 @@ def _traverse_udtfs(scope):
                 top = child_scope
                 sources[_get_source_alias(expression)] = child_scope
 
-            scope.subquery_scopes.append(top)
+            # This derived table belongs to the derived_table scopes for the parent
+            scope.derived_table_scopes.append(top)
 
     scope.sources.update(sources)
 

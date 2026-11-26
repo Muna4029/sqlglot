@@ -16,7 +16,7 @@ if t.TYPE_CHECKING:
 logger = logging.getLogger("sqlglot")
 
 
-@dataclass(frozen=True)
+@dataclass
 class Node:
     name: str
     expression: exp.Expression
@@ -92,7 +92,7 @@ def lineage(
     """
 
     expression = maybe_parse(sql, dialect=dialect)
-    column = normalize_identifiers.normalize_identifiers(column, dialect=dialect).name
+    column = normalize_identifiers(column, dialect=dialect).name
 
     if sources:
         expression = exp.expand(

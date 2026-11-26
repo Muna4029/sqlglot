@@ -56,7 +56,9 @@ def qualify_columns(
     infer_schema = schema.empty if infer_schema is None else infer_schema
     dialect = Dialect.get_or_raise(schema.dialect)
     pseudocolumns = dialect.PSEUDOCOLUMNS
-    bigquery = dialect == "bigquery"
+    # Normalize dialect name comparison to handle Dialect objects or strings
+    dialect_name = getattr(dialect, "name", str(dialect)).lower()
+    bigquery = dialect_name == "bigquery"
 
     for scope in traverse_scope(expression):
         scope_expression = scope.expression
@@ -107,8 +109,10 @@ def qualify_columns(
         # https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT
         _expand_order_by_and_distinct_on(scope, resolver)
 
-        if bigquery:
-            annotator.annotate_scope(scope)
+        # Always attempt to annotate the scope so types (e.g. function return types) are available
+        # for downstream processing. Some dialects annotate earlier for struct expansion, but
+        # ensuring annotation here covers non-BigQuery cases as well.
+        annotator.annotate_scope(scope)
 
     return expression
 
@@ -744,8 +748,11 @@ def _expand_stars(
             if pseudocolumns:
                 columns = [name for name in columns if name.upper() not in pseudocolumns]
 
+            # If this table has no columns or contains a wildcard entry for its columns,
+            # skip expanding this table and continue to the next one rather than aborting
+            # the entire star expansion for the whole scope.
             if not columns or "*" in columns:
-                return
+                continue
 
             table_id = id(table)
             columns_to_exclude = except_columns.get(table_id) or set()
