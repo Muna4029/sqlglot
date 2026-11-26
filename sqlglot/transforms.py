@@ -183,12 +183,18 @@ def eliminate_distinct_on(expression: exp.Expression) -> exp.Expression:
     ):
         row_number_window_alias = find_new_name(expression.named_selects, "_row_number")
 
-        distinct_cols = expression.args["distinct"].pop().args["on"].expressions
+        # Get the DISTINCT ON columns from the Distinct node (don't call pop on nodes)
+        distinct_node = expression.args["distinct"]
+        on_arg = distinct_node.args.get("on")
+        distinct_cols = [c.copy() for c in on_arg.expressions]
+
         window = exp.Window(this=exp.RowNumber(), partition_by=distinct_cols)
 
         order = expression.args.get("order")
         if order:
-            window.set("order", order.pop())
+            # Detach the ORDER BY from the select and attach a copy to the window
+            expression.set("order", None)
+            window.set("order", order.copy())
         else:
             window.set("order", exp.Order(expressions=[c.copy() for c in distinct_cols]))
 
@@ -583,8 +589,23 @@ def add_within_group_for_percentiles(expression: exp.Expression) -> exp.Expressi
         and not isinstance(expression.parent, exp.WithinGroup)
         and expression.expression
     ):
-        column = expression.this.pop()
-        expression.set("this", expression.expression.pop())
+        # Avoid calling pop() on node objects; instead copy and reassign the relevant parts.
+        column = expression.this.copy() if expression.this is not None else None
+
+        expr_arg = expression.args.get("expression")
+        new_this = None
+        if isinstance(expr_arg, exp.Expression) and getattr(expr_arg, "expressions", None):
+            # Use the last expression as the new "this" (copy to avoid mutating shared nodes)
+            new_this = expr_arg.expressions[-1].copy()
+        elif expr_arg is not None:
+            try:
+                new_this = expr_arg.copy()
+            except Exception:
+                new_this = None
+
+        if new_this is not None:
+            expression.set("this", new_this)
+
         order = exp.Order(expressions=[exp.Ordered(this=column)])
         expression = exp.WithinGroup(this=expression, expression=order)
 
@@ -1014,11 +1035,19 @@ def eliminate_window_clause(expression: exp.Expression) -> exp.Expression:
         window_expression: t.Dict[str, exp.Expression] = {}
 
         def _inline_inherited_window(window: exp.Expression) -> None:
-            inherited_window = window_expression.get(window.alias.lower())
+            # The window may reference another named window via its alias.
+            alias = getattr(window, "alias", None)
+            if not alias:
+                return
+
+            inherited_window = window_expression.get(alias.lower())
             if not inherited_window:
                 return
 
+            # Remove the alias reference and copy relevant parts from the inherited window.
             window.set("alias", None)
+            # Also clear name to avoid confusion after inlining
+            window.set("name", None)
             for key in ("partition_by", "order", "spec"):
                 arg = inherited_window.args.get(key)
                 if arg:
@@ -1026,7 +1055,8 @@ def eliminate_window_clause(expression: exp.Expression) -> exp.Expression:
 
         for window in windows:
             _inline_inherited_window(window)
-            window_expression[window.name.lower()] = window
+            if getattr(window, "name", None):
+                window_expression[window.name.lower()] = window
 
         for window in find_all_in_scope(expression, exp.Window):
             _inline_inherited_window(window)

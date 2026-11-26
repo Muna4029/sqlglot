@@ -1333,7 +1333,7 @@ LIFETIME(MIN 0 MAX 0)""",
 
         time_strings_no_utc = ["2020-01-01 00:00:01" for i in range(4)]
         for utc, no_utc in zip(time_strings, time_strings_no_utc):
-            with self.subTest(f"'{time_string}' with UTC timezone"):
+            with self.subTest(f"'{utc}' with UTC timezone"):
                 self.assertEqual(
                     exp.TimeStrToTime(
                         this=exp.Literal.string(utc), zone=exp.Literal.string("UTC")
@@ -1354,10 +1354,10 @@ LIFETIME(MIN 0 MAX 0)""",
         for time_string in time_strings:
             with self.subTest(f"'{time_string}'"):
                 self.assertEqual(
-                    exp.TimeStrToTime(this=exp.Literal.string(time_string[0])).sql(
+                    exp.TimeStrToTime(this=exp.Literal.string(time_string)).sql(
                         dialect=self.dialect
                     ),
-                    f"CAST('{time_string[0]}' AS DateTime64(6))",
+                    f"CAST('{time_string}' AS DateTime64(6))",
                 )
 
         time_strings_no_utc = [
@@ -1370,7 +1370,7 @@ LIFETIME(MIN 0 MAX 0)""",
         ]
 
         for utc, no_utc in zip(time_strings, time_strings_no_utc):
-            with self.subTest(f"'{time_string}' with UTC timezone"):
+            with self.subTest(f"'{utc}' with UTC timezone"):
                 self.assertEqual(
                     exp.TimeStrToTime(
                         this=exp.Literal.string(utc), zone=exp.Literal.string("UTC")
